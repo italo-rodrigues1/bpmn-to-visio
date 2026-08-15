@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:bioc="http://bpmn.io/schema/bpmn/biocolor/1.0" id="Definitions_Purchase" targetNamespace="http://bpmn.io/schema/bpmn" exporter="BPMN to Visio Lab" exporterVersion="1.0">
+  <bpmn:collaboration id="Collaboration_Purchase">
+    <bpmn:participant id="Participant_Internal" name="Processo de compras" processRef="Process_Purchase" />
+  </bpmn:collaboration>
+  <bpmn:process id="Process_Purchase" name="Aprovação de pedido de compra" isExecutable="false">
+    <bpmn:laneSet id="LaneSet_Purchase">
+      <bpmn:lane id="Lane_Requester" name="Solicitante">
+        <bpmn:flowNodeRef>StartEvent_Request</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_Create</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_Register</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_Approval</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>EndEvent_Automatic</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Procurement" name="Compras">
+        <bpmn:flowNodeRef>Task_Approve</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>EndEvent_Approved</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+    <bpmn:startEvent id="StartEvent_Request" name="Pedido recebido">
+      <bpmn:outgoing>Flow_Start_Create</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:userTask id="Task_Create" name="Preencher solicitação">
+      <bpmn:incoming>Flow_Start_Create</bpmn:incoming>
+      <bpmn:outgoing>Flow_Create_Register</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:serviceTask id="Task_Register" name="Registrar no ERP">
+      <bpmn:incoming>Flow_Create_Register</bpmn:incoming>
+      <bpmn:outgoing>Flow_Register_Gateway</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="Gateway_Approval" name="Exige aprovação?" default="Flow_Gateway_Automatic">
+      <bpmn:incoming>Flow_Register_Gateway</bpmn:incoming>
+      <bpmn:outgoing>Flow_Gateway_Approve</bpmn:outgoing>
+      <bpmn:outgoing>Flow_Gateway_Automatic</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:userTask id="Task_Approve" name="Aprovar compra">
+      <bpmn:incoming>Flow_Gateway_Approve</bpmn:incoming>
+      <bpmn:outgoing>Flow_Approve_End</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:endEvent id="EndEvent_Approved" name="Compra aprovada">
+      <bpmn:incoming>Flow_Approve_End</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:endEvent id="EndEvent_Automatic" name="Liberação automática">
+      <bpmn:incoming>Flow_Gateway_Automatic</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_Start_Create" sourceRef="StartEvent_Request" targetRef="Task_Create" />
+    <bpmn:sequenceFlow id="Flow_Create_Register" sourceRef="Task_Create" targetRef="Task_Register" />
+    <bpmn:sequenceFlow id="Flow_Register_Gateway" sourceRef="Task_Register" targetRef="Gateway_Approval" />
+    <bpmn:sequenceFlow id="Flow_Gateway_Approve" name="Sim" sourceRef="Gateway_Approval" targetRef="Task_Approve" />
+    <bpmn:sequenceFlow id="Flow_Gateway_Automatic" name="Não" sourceRef="Gateway_Approval" targetRef="EndEvent_Automatic" />
+    <bpmn:sequenceFlow id="Flow_Approve_End" sourceRef="Task_Approve" targetRef="EndEvent_Approved" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_Purchase">
+    <bpmndi:BPMNPlane id="BPMNPlane_Purchase" bpmnElement="Collaboration_Purchase">
+      <bpmndi:BPMNShape id="Participant_Internal_di" bpmnElement="Participant_Internal" isHorizontal="true" bioc:fill="#F8FAFC" bioc:stroke="#334155">
+        <dc:Bounds x="80" y="80" width="940" height="360" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Requester_di" bpmnElement="Lane_Requester" isHorizontal="true">
+        <dc:Bounds x="110" y="80" width="910" height="180" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Procurement_di" bpmnElement="Lane_Procurement" isHorizontal="true">
+        <dc:Bounds x="110" y="260" width="910" height="180" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="StartEvent_Request_di" bpmnElement="StartEvent_Request" bioc:fill="#DDF6EA" bioc:stroke="#147D64">
+        <dc:Bounds x="160" y="150" width="36" height="36" />
+        <bpmndi:BPMNLabel><dc:Bounds x="140" y="192" width="78" height="28" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Create_di" bpmnElement="Task_Create" bioc:fill="#FFFFFF" bioc:stroke="#334155">
+        <dc:Bounds x="250" y="128" width="120" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Register_di" bpmnElement="Task_Register" bioc:fill="#EDF6FF" bioc:stroke="#2563EB">
+        <dc:Bounds x="430" y="128" width="120" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_Approval_di" bpmnElement="Gateway_Approval" isMarkerVisible="true" bioc:fill="#FFF2CC" bioc:stroke="#B7791F">
+        <dc:Bounds x="610" y="143" width="50" height="50" />
+        <bpmndi:BPMNLabel><dc:Bounds x="584" y="108" width="102" height="28" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Approve_di" bpmnElement="Task_Approve" bioc:fill="#FFF0EA" bioc:stroke="#E4573D">
+        <dc:Bounds x="720" y="310" width="120" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_Approved_di" bpmnElement="EndEvent_Approved" bioc:fill="#FFE5DE" bioc:stroke="#D8452A">
+        <dc:Bounds x="920" y="332" width="36" height="36" />
+        <bpmndi:BPMNLabel><dc:Bounds x="896" y="374" width="84" height="28" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_Automatic_di" bpmnElement="EndEvent_Automatic" bioc:fill="#FFE5DE" bioc:stroke="#D8452A">
+        <dc:Bounds x="920" y="150" width="36" height="36" />
+        <bpmndi:BPMNLabel><dc:Bounds x="892" y="192" width="92" height="28" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_Start_Create_di" bpmnElement="Flow_Start_Create">
+        <di:waypoint x="196" y="168" /><di:waypoint x="250" y="168" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Create_Register_di" bpmnElement="Flow_Create_Register">
+        <di:waypoint x="370" y="168" /><di:waypoint x="430" y="168" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Register_Gateway_di" bpmnElement="Flow_Register_Gateway">
+        <di:waypoint x="550" y="168" /><di:waypoint x="610" y="168" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Gateway_Approve_di" bpmnElement="Flow_Gateway_Approve">
+        <di:waypoint x="635" y="193" /><di:waypoint x="635" y="350" /><di:waypoint x="720" y="350" />
+        <bpmndi:BPMNLabel><dc:Bounds x="642" y="264" width="22" height="14" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Gateway_Automatic_di" bpmnElement="Flow_Gateway_Automatic">
+        <di:waypoint x="660" y="168" /><di:waypoint x="920" y="168" />
+        <bpmndi:BPMNLabel><dc:Bounds x="778" y="148" width="26" height="14" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Approve_End_di" bpmnElement="Flow_Approve_End">
+        <di:waypoint x="840" y="350" /><di:waypoint x="920" y="350" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

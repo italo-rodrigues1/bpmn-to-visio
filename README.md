@@ -1,36 +1,107 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# BPMN → Visio Lab
 
-## Getting Started
+Aplicação Next.js para modelar ou importar BPMN 2.0 e gerar arquivos Microsoft Visio `.vsdx` editáveis. O POC usa o editor oficial `bpmn-js` no navegador e, no servidor, o código original MIT do [`Mgabr90/bpmn-to-visio`](https://github.com/Mgabr90/bpmn-to-visio), versão 1.1.1.
 
-First, run the development server:
+## O que este POC valida
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- importação por seletor ou arrastar e soltar de `.bpmn`/`.xml`;
+- edição visual real com a paleta, context pad, atalhos e regras do BPMN.js;
+- visualização e edição do XML BPMN 2.0;
+- leitura de `BPMNShape`, `BPMNEdge`, `dc:Bounds`, waypoints e cores do BPMN.io;
+- relatório imediato de elementos, conectores, pools/lanes e limitações conhecidas;
+- geração e download de `.bpmn` e `.vsdx`;
+- conversão temporária no servidor, sem persistir o XML enviado;
+- inspeção automatizada da estrutura ZIP/Open XML gerada.
+
+## Arquitetura
+
+```text
+BPMN.js (edição no navegador)
+          │
+          ▼
+    BPMN 2.0 XML + BPMNDI  ← representação canônica
+          │
+          ▼
+POST /api/convert (Next.js / Node.js)
+          │
+          ▼
+bpmn-to-visio 1.1.1 (Python, código MIT incluído)
+          │
+          ▼
+VSDX Open XML editável
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+O conversor original está preservado em `converter/bpmn_to_vsdx.py`, acompanhado de sua licença e atribuição. A rota Next.js apenas cria uma área temporária isolada, chama o conversor e devolve o binário; o diretório temporário é removido em seguida.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Executar localmente
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Requisitos:
 
-## Learn More
+- Node.js 20.9 ou superior;
+- Python 3.7 ou superior;
+- Microsoft Visio apenas para a validação manual final (não é necessário para gerar o arquivo).
 
-To learn more about Next.js, take a look at the following resources:
+Instale e inicie:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm install
+npm run dev
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Abra [http://localhost:3000](http://localhost:3000). A aplicação tenta localizar `python`, `python3` ou `py -3`. Caso necessário, copie `.env.example` para `.env.local` e informe o executável:
 
-## Deploy on Vercel
+```dotenv
+BPMN_TO_VISIO_PYTHON=C:\Python313\python.exe
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Validar o conversor
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm run verify:converter
+npm run build
+```
+
+O primeiro comando converte o BPMN de exemplo e verifica se o resultado contém as partes Open XML obrigatórias e shapes na página do Visio. O arquivo de inspeção fica em `work/verification/pedido-de-compra.vsdx`.
+
+## Elementos cobertos pelo motor original
+
+| Categoria | Elementos |
+| --- | --- |
+| Atividades | task, user/service/script/send/receive/manual/business-rule task, sub-process e call activity |
+| Eventos | start, end, intermediate catch/throw e boundary |
+| Gateways | exclusive, parallel, inclusive e event-based |
+| Organização | participant/pool, lane e text annotation |
+| Conexões | sequence flow, message flow e association |
+| Fidelidade | bounds, waypoints, labels e `bioc:fill`/`bioc:stroke` |
+
+Limitações atuais herdadas do projeto-base: ícones específicos de tipos de task não são desenhados, eventos intermediários são simplificados, grupos e data objects não são renderizados e sub-processos recolhidos não são suportados. A interface sinaliza esses casos antes da exportação.
+
+## Roteiro de comparação com o Aspose
+
+Use o mesmo `.bpmn` nas duas implementações e avalie:
+
+1. fidelidade visual de posição, tamanho, cor e texto;
+2. edição individual de tasks, gateways, eventos, pools e lanes no Visio;
+3. edição dos conectores e preservação dos waypoints;
+4. abertura no Visio Desktop e Visio Web sem reparo do arquivo;
+5. comportamento com diagramas grandes e com elementos listados nas limitações;
+6. diferença de tamanho dos arquivos e tempo de conversão.
+
+## API
+
+`POST /api/convert`
+
+```json
+{
+  "fileName": "processo.bpmn",
+  "bpmnXml": "<?xml version=\"1.0\"?>..."
+}
+```
+
+A resposta de sucesso usa o tipo `application/vnd.ms-visio.drawing` e retorna o arquivo `.vsdx`. O limite deste POC é 5 MB por BPMN.
+
+## Licenças
+
+- aplicação POC: código deste repositório;
+- `bpmn-js`: licença declarada pelo projeto BPMN.io;
+- `converter/bpmn_to_vsdx.py`: MIT, Mahmoud Gabr; veja `converter/LICENSE` e `converter/NOTICE.md`.
